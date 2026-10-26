@@ -1,0 +1,13 @@
+{
+  "name": "pintfc-mvp",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "supabase": "supabase",
+    "vercel": "vercel"
+  },
+  "devDependencies": {
+    "supabase": "^2.122.0",
+    "vercel": "^65.2.0"
+  }
+}

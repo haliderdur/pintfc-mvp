@@ -57,3 +57,14 @@ One line per decision and why. Append, don't rewrite history.
   permission (confirmed via a `CREATE TABLE ... read-only transaction`
   error) — the owner generated a replacement token with full access
   mid-session.
+- **D14 — Next.js Cache Components (`cacheComponents`/`partialPrefetching`
+  in `next.config.ts`) are left off**: this app reads live, per-request
+  data everywhere (session, RSVP counts, consent-filtered profiles — no
+  static export, per `architecture.md`), and Cache Components' default
+  prerendering mode fails the build unless every dynamic read
+  (`cookies()`, etc.) is wrapped in `<Suspense>`. Off is the simpler
+  match for an app with no static/cacheable routes.
+- **D15 — `middleware.ts` renamed to `proxy.ts`** (Next.js 16's current
+  convention; `middleware.ts` still works but logs a deprecation
+  warning naming `proxy.ts` as the replacement). Session 01's package
+  pin (`next@16.4.3`) already uses the new name.

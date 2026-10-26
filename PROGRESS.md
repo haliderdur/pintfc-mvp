@@ -1,5 +1,87 @@
 # Progress
 
+## Session 02 — Auth and sessions (2026-10-26)
+
+### Done
+
+- `lib/supabase/server.ts` (Server Component / Route Handler client) and
+  `lib/supabase/middleware.ts` + `proxy.ts` (session-cookie refresh on
+  every request) using `@supabase/ssr`.
+- `/sign-in` page and `POST /api/auth/sign-in` / `sign-out` /
+  `sign-out-all` Route Handlers, matching `docs/design/api.md` exactly
+  (request/response shapes, generic `INVALID_CREDENTIALS` message).
+- Shared header (`components/Header.tsx` + `HeaderAuthControls.tsx`):
+  `header-signin` link when signed out; player name + `header-signout`
+  + `header-signout-all` when signed in.
+- `lib/api/error-response.ts` — the one `{ error: { code, message } }`
+  shape every Route Handler now returns (rules.md §4), reused going
+  forward.
+- Turned off Next.js Cache Components (D14) and renamed `middleware.ts`
+  to `proxy.ts` (D15) — both needed for the build to succeed with this
+  app's all-dynamic, cookie-reading pages.
+
+### Proof (exit gate)
+
+```
+$ npx tsc --noEmit
+(no output — exit 0)
+
+$ npm run lint
+(no errors or warnings — exit 0)
+
+$ npm run build
+✓ Compiled successfully in 279ms
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/auth/sign-in
+├ ƒ /api/auth/sign-out
+├ ƒ /api/auth/sign-out-all
+└ ƒ /sign-in
+ƒ Proxy (Middleware)
+
+$ npm run test
+ ✓ tests/database/results-view.test.ts (2 tests)
+ ✓ tests/database/privacy-views.test.ts (4 tests)
+ ✓ tests/database/rsvp-rules.test.ts (3 tests)
+ Test Files  3 passed (3)
+      Tests  9 passed (9)
+
+$ npm run plan-check
+plan-check passed: 38/38 acceptance checks, each with exactly one owning test.
+
+$ npm run test:e2e
+ ✓ AC-1.6.4 a stale session cookie after sign-out grants no player privileges
+ ✓ AC-1.1.1 a seeded player can sign in with their fake credentials
+ ✓ AC-1.1.3 sign-in is rejected for wrong credentials with a generic error
+ ✓ AC-1.1.4 a signed-in player stays signed in across a reload
+ ✓ AC-1.6.1 sign out ends the session on this device
+ ✓ AC-1.6.2 sign out of all devices revokes every session
+ ✓ AC-1.6.3 signing out of all devices invalidates a second device's session
+ 7 passed (17.6s)
+```
+
+### Decisions made this session
+
+See `DECISIONS.md` D14 (Cache Components off) and D15 (`proxy.ts`
+rename).
+
+### Next session needs to know
+
+- **Playwright tests sign in against the real Supabase Auth project**
+  (no local instance — D12). A burst of sign-ins can transiently hit
+  Supabase's own rate limit (observed once, passed on retry); the
+  config now has `retries: 1` for this. If `npm run test:e2e` fails with
+  `signin-error` showing for a seeded player that should have valid
+  credentials, retry before assuming a code regression.
+- The shared header (`components/Header.tsx`) and `/sign-in` are
+  intentionally unstyled beyond `data-testid` hooks — Session 07 is
+  where the "Sport" look and the contrast/320px gates get applied
+  across every screen, not per-session.
+- Sessions 03–06 can now use `createServerSupabaseClient()` /
+  `errorResponse()` directly; no further auth plumbing is needed before
+  starting them.
+
 ## Session 01 — Foundation: schema, RLS, views, seed (2026-10-26)
 
 ### Done

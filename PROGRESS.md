@@ -1,5 +1,103 @@
 # Progress
 
+## Session 04 — Squad and profiles (2026-10-26)
+
+### Done
+
+- `/squad` (`app/squad/page.tsx`): all active players from `public_players`,
+  grouped by position (GK/DEF/MID/FWD), each a `squad-player-{id}` link to
+  `/players/[id]`. Archived-player exclusion already enforced by the
+  view (Session 01) — this just renders its rows.
+- `/players/[id]` (`app/players/[id]/page.tsx`): reads `public_profile`,
+  real 404 (`notFound()`) for an archived or unknown id. Renders only
+  consent-visible fields (`profile-field-photo`, `profile-field-nationality`,
+  `profile-field-stats`), always `profile-name`/`profile-number`/
+  `profile-position`.
+- `lib/profile/get-profile.ts` — one `getPlayerProfile()` function shared
+  by self-view and public-view (plan task 3, not two code paths): reads
+  `public_profile` for everyone, then for a signed-in caller viewing
+  their own id, re-reads their raw `players` row (allowed only for their
+  own row by the `players_self_select` RLS policy from Session 01) and
+  runs it through `visiblePlayerFields()`'s `viewerIsSelf` branch instead
+  — AC-4.3.3. Never selects `dob`/`email`/`phone` at all, from either
+  path (AC-4.3.1).
+- Found this session's "api-level" tests (AC-4.2.1, AC-4.3.1, AC-4.3.3)
+  don't need a Route Handler to exist — `/players/[id]` has none (it's a
+  Server Component reading the view directly, per `api.md`) — so they
+  call `getPlayerProfile()` directly with real Supabase clients
+  (`tests/database/profile-privacy.test.ts`), matching Session 01's
+  database-test style rather than going through Playwright.
+- Re-seeded (`npm run seed`) partway through this session: Session 01's
+  `tests/database/rsvp-rules.test.ts` started failing because the
+  "earliest scheduled match" it picks had crossed its 2h RSVP cutoff in
+  real time since Session 01 was seeded (D9) — an idempotent reseed, not
+  a code fix, resolved it. Unrelated to this session's own changes.
+- Fixed a pre-existing gap in `eslint.config.mjs` found while verifying
+  this session: its `globalIgnores` override replaces
+  `eslint-config-next`'s defaults wholesale and didn't re-add
+  `playwright-report/`/`test-results/`, so once real Playwright trace
+  viewer assets existed there, `npm run lint` tried to lint that bundled
+  (minified) JS as app code. Added both to the ignore list.
+
+### Proof (exit gate)
+
+```
+$ npx tsc --noEmit
+(no output — exit 0)
+
+$ npm run build
+✓ Compiled successfully
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/auth/sign-in
+├ ƒ /api/auth/sign-out
+├ ƒ /api/auth/sign-out-all
+├ ƒ /api/fixtures/[id]/rsvp
+├ ƒ /api/fixtures/[id]/summary
+├ ƒ /fixtures/[id]
+├ ƒ /players/[id]
+├ ƒ /sign-in
+└ ƒ /squad
+
+$ npm run test
+ ✓ tests/unit/countdown.test.ts (4 tests)
+ ✓ tests/unit/season-record.test.ts (2 tests)
+ ✓ tests/database/results-view.test.ts (2 tests)
+ ✓ tests/database/privacy-views.test.ts (4 tests)
+ ✓ tests/database/rsvp-rules.test.ts (3 tests)
+ ✓ tests/database/profile-privacy.test.ts (4 tests)
+ Test Files  6 passed (6)
+      Tests  19 passed (19)
+
+$ npm run plan-check
+plan-check passed: 38/38 acceptance checks, each with exactly one owning test.
+
+$ npm run lint
+(no errors or warnings — exit 0)
+
+$ npx playwright test
+  27 passed (48.7s)
+```
+
+### Decisions made this session
+
+None new — built directly on D1–D17.
+
+### Next session needs to know
+
+- Session 05 (privacy settings) can read `visiblePlayerFields()` /
+  `canEditOwnConsent()` from `lib/rules/visibility.ts` directly — no
+  further plumbing needed. It will also need its own self-only Route
+  Handler (`PATCH /api/privacy` per `api.md`), unlike this session's
+  read-only pages.
+- `lib/profile/get-profile.ts` is the one place profile field
+  visibility is decided in app code — reuse it rather than re-querying
+  `public_profile`/`players` directly from a new page.
+- If a database/vitest test that reads "the earliest scheduled match"
+  or similar time-relative seed state starts failing for no code
+  reason, re-seed first (D9) before assuming a regression.
+
 ## Session 06 — RSVP and fixture page (2026-10-26)
 
 ### Done

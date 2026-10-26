@@ -8,3 +8,7 @@ supabase/.temp/
 dist/
 coverage/
 *.log
+*.tsbuildinfo
+seed-logins.md
+playwright-report/
+test-results/

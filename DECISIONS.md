@@ -41,3 +41,19 @@ One line per decision and why. Append, don't rewrite history.
   cookies as adequate CSRF protection for this MVP** (`docs/design/
   threats.md` T8): acceptable given fake data and no payment flows;
   revisit if real PII is ever introduced.
+- **D12 — No local Supabase instance; Session 01's database tests run
+  directly against the shared remote project**: Docker Desktop isn't
+  available in this environment (neither the CLI's bash nor PowerShell
+  can see a `docker` binary), so `supabase start` isn't an option.
+  Migrations and the seed script run against `dgrjyksawdongzxpkjey`
+  (owner's explicit go-ahead given in session). Consequence: preview/
+  prod/dev now share state even earlier than D4 anticipated — re-seed
+  before any demo (`docs/design/threats.md` T7).
+- **D13 — Schema/view writes go through the Supabase Management API's
+  `database/query` endpoint when `supabase db push`'s role-bootstrap
+  flow is unavailable**, falling back to `db push` once a token with
+  `database_write` scope is present. Recorded because the first
+  `SUPABASE_ACCESS_TOKEN` in `.env.local` was scoped without that
+  permission (confirmed via a `CREATE TABLE ... read-only transaction`
+  error) — the owner generated a replacement token with full access
+  mid-session.

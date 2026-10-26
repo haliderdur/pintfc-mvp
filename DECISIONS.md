@@ -68,3 +68,19 @@ One line per decision and why. Append, don't rewrite history.
   convention; `middleware.ts` still works but logs a deprecation
   warning naming `proxy.ts` as the replacement). Session 01's package
   pin (`next@16.4.3`) already uses the new name.
+- **D16 — `match_results.home_score` always records PINT FC's own score,
+  regardless of which side was actually home/away on the day**: the
+  schema (`docs/design/data.md`) has no column indicating which side
+  was home, and no FR in scope needs one (full fixture-list venue
+  detail is out of scope). Session 03 needed a convention to compute
+  the season record and display results; "home_score is always ours"
+  is the convention going forward. If a real home/away distinction is
+  ever needed, add a column rather than reinterpreting this one.
+- **D17 — Sessions 03 (home) and 06 (RSVP/fixture page) were built
+  together in one working session instead of strictly one-at-a-time**:
+  this was a deviation from the session discipline in `CLAUDE.md`,
+  discovered as uncommitted working-tree state when resuming after an
+  interrupted session, with no record of the reasoning at the time.
+  Recorded here rather than unwound because both halves pass their own
+  exit gates independently; `PROGRESS.md` logs them as two separate
+  session entries. Sessions 04/05 should still be done one at a time.

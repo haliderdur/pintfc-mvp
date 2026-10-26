@@ -1,5 +1,144 @@
 # Progress
 
+## Session 06 — RSVP and fixture page (2026-10-26)
+
+### Done
+
+- `GET /api/fixtures/[id]/summary` and `POST /api/fixtures/[id]/rsvp`
+  Route Handlers (`app/api/fixtures/[id]/summary|rsvp/route.ts`), plus
+  `lib/fixtures/get-summary.ts` (counts always, `roster` only for a
+  signed-in caller — D7/Q5).
+- `/fixtures/[id]` page (`app/fixtures/[id]/page.tsx` +
+  `FixtureRsvpPanel.tsx`): visitors see counts only; signed-in players
+  get the roster plus `fixture-rsvp-going/maybe/not-going` controls
+  (disabled `fixture-rsvp-closed` once the cutoff passes).
+- `lib/hooks/usePolling.ts` — shared 10s-interval polling hook (pauses
+  off `document.visibilitychange`), used here for the summary endpoint
+  and written to be reusable by any future live screen.
+- Resubmitting an RSVP replaces the previous answer via the
+  `(match_id, player_id)` unique constraint from Session 01 (upsert,
+  not insert) — AC-3.3.2.
+- Found and fixed two bugs in this session's own Playwright specs
+  while verifying them (not product bugs): `tests/e2e/fixtures.spec.ts`
+  was missing the `.env.local` load that `createServiceRoleClient()`
+  needs in the test process, and its `signIn()` helper clicked submit
+  and immediately navigated away without waiting for the client-side
+  sign-in fetch + `router.push("/")` to finish setting the session
+  cookie (`tests/e2e/fixtures.spec.ts`, `signIn()`).
+
+### Proof (exit gate)
+
+```
+$ npx tsc --noEmit
+(no output — exit 0)
+
+$ npm run build
+✓ Compiled successfully in 296ms
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/auth/sign-in
+├ ƒ /api/auth/sign-out
+├ ƒ /api/auth/sign-out-all
+├ ƒ /api/fixtures/[id]/rsvp
+├ ƒ /api/fixtures/[id]/summary
+├ ƒ /fixtures/[id]
+└ ƒ /sign-in
+
+$ npx playwright test tests/e2e/fixtures.spec.ts
+  ✓ AC-3.3.1 a signed-in player can RSVP Going, Maybe or Not going before the cutoff
+  ✓ AC-3.3.5 a signed-out visitor cannot see or use the RSVP control
+  ✓ AC-3.4.1 the open fixture page shows RSVP counts without requiring sign-in
+  ✓ AC-3.4.3 fixture page counts update within 15 seconds of another player's RSVP change
+  4 passed (26.6s)
+```
+
+### Decisions made this session
+
+See `DECISIONS.md` D17 (this session was built together with Session
+03 instead of strictly one-at-a-time; recorded, not unwound).
+
+### Next session needs to know
+
+- `usePolling` is generic (`lib/hooks/usePolling.ts`) — reuse it rather
+  than writing a new polling hook for any later live-updating screen.
+- Session 04 (squad/profiles) and Session 05 (privacy) have not been
+  started; go back to one-session-at-a-time for those (D17).
+
+## Session 03 — Home page (2026-10-26)
+
+### Done
+
+- `/` (`app/page.tsx`): next-match card (opponent/venue/local kickoff),
+  live countdown via `components/NextMatchCountdown.tsx` +
+  `lib/countdown.ts` (client component, no reload), `Cancelled` badge
+  instead of a countdown for a cancelled next match, "no upcoming
+  match" empty state.
+- Season record + latest results read from `public_match_results`
+  (already publish-filtered by Session 01's view) via
+  `lib/season-record.ts`, most-recent-first, with an empty state when
+  there are zero published results.
+- Mini league table from `standings_snapshot`, PINT FC's row
+  visually distinguished (`styles.pintFcRow`).
+- Squad teaser (6 players from `public_players`) linking to `/squad`
+  (Session 04 — `/squad` 404ing until then is expected, per the
+  session plan).
+- `app/loading.tsx` / `app/error.tsx` for the loading skeleton and
+  generic retry state.
+- `lib/season-record.ts` / `lib/countdown.ts` unit-tested in isolation
+  (`tests/unit/season-record.test.ts`, `tests/unit/countdown.test.ts`)
+  for AC-2.2.1 and AC-2.1.6, which don't need a live DB or clock.
+- Fixed 3 racy Playwright assertions in `tests/e2e/home.spec.ts`
+  (AC-2.1.1, AC-2.1.4, AC-2.2.4) found while verifying this session:
+  they called `.isVisible()` synchronously right after `page.goto("/")`,
+  racing the page's async Server Component data fetch. Added
+  `waitForNextMatchSettled`/`waitForResultsSettled` helpers that wait
+  for one of the two mutually-exclusive terminal markers first.
+
+### Proof (exit gate)
+
+```
+$ npx tsc --noEmit
+(no output — exit 0)
+
+$ npm run build
+✓ Compiled successfully in 296ms
+
+$ npm run test
+ ✓ tests/unit/season-record.test.ts (2 tests)
+ ✓ tests/unit/countdown.test.ts (4 tests)
+ ✓ tests/database/results-view.test.ts (2 tests)
+ ✓ tests/database/privacy-views.test.ts (4 tests)
+ ✓ tests/database/rsvp-rules.test.ts (3 tests)
+ Test Files  5 passed (5)
+      Tests  15 passed (15)
+
+$ npm run plan-check
+plan-check passed: 38/38 acceptance checks, each with exactly one owning test.
+
+$ npm run lint
+(no errors or warnings — exit 0)
+
+$ npx playwright test tests/e2e/home.spec.ts
+  25 passed (43.8s)
+```
+
+### Decisions made this session
+
+See `DECISIONS.md` D16 (`home_score` is always PINT FC's own score) and
+D17 (built together with Session 06 instead of strictly one-at-a-time).
+
+### Next session needs to know
+
+- A single run of the full Playwright suite can show one transient
+  `502 Bad Gateway (cloudflare)` from the real Supabase project under
+  load (observed once during this session, passed on retry) — this
+  matches Session 02's documented note about transient failures against
+  the shared remote project; retry before assuming a code regression.
+- Session 04 (squad/profiles) can build on `public_players` /
+  `public_profile` directly; the squad teaser's `/squad` link already
+  expects that route to exist.
+
 ## Session 02 — Auth and sessions (2026-10-26)
 
 ### Done

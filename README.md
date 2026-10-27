@@ -10,7 +10,8 @@ requirements and design this build follows.
 - [Supabase](https://supabase.com) Postgres + Auth
 - [Vitest](https://vitest.dev) for unit/API/database-level tests
 - [Playwright](https://playwright.dev) for end-to-end tests
-- Hosted on [Vercel](https://vercel.com)
+- Hosted on [Vercel](https://vercel.com) — live at
+  [halid-pintfc.vercel.app](https://halid-pintfc.vercel.app)
 
 ## Project docs
 

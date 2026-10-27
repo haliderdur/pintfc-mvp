@@ -84,3 +84,11 @@ One line per decision and why. Append, don't rewrite history.
   Recorded here rather than unwound because both halves pass their own
   exit gates independently; `PROGRESS.md` logs them as two separate
   session entries. Sessions 04/05 should still be done one at a time.
+- **D18 — Vercel Authentication (SSO Protection) is disabled on the
+  `halid-pintfc` project**: resolves `docs/REQUIREMENTS.md` R4 — Hobby
+  plan's default would otherwise put a Vercel-login wall in front of
+  every preview/production URL, which students (no Vercel account)
+  couldn't get past. Acceptable because the app has no real secrets or
+  PII behind it (seed/fake data only, per the Data rule in `CLAUDE.md`).
+  Password protection and trusted-IP restriction are also off (project
+  defaults; never enabled).

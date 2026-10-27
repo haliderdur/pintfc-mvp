@@ -224,12 +224,17 @@ export default async function Home() {
           {latestResults.length > 0 ? (
             <ul data-testid="home-results-list" className="flex flex-col gap-2">
               {latestResults.map((r) => (
-                <li key={r.matchId} className="flex items-center justify-between gap-2 text-sm">
-                  <span>{r.opponentName}</span>
-                  <span className="font-mono font-medium">
+                <li
+                  key={r.matchId}
+                  className="grid grid-cols-[1fr_auto_auto] items-center gap-3 text-sm"
+                >
+                  <span className="min-w-0 truncate">{r.opponentName}</span>
+                  <span className="font-mono font-medium tabular-nums">
                     {r.homeScore}-{r.awayScore}
                   </span>
-                  <Badge variant="outline">{r.competitionType}</Badge>
+                  <Badge variant="outline" className="justify-self-end">
+                    {r.competitionType}
+                  </Badge>
                 </li>
               ))}
             </ul>

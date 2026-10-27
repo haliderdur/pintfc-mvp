@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "node",
+      "args": [
+        "scripts/mcp-env.cjs",
+        "npx",
+        "-y",
+        "mcp-remote",
+        "https://api.githubcopilot.com/mcp/",
+        "--header",
+        "Authorization:Bearer {{GITHUB_MCP_PAT}}",
+        "--header",
+        "X-MCP-Readonly:true",
+        "--header",
+        "X-MCP-Toolsets:repos,issues,pull_requests"
+      ]
+    },
+    "supabase": {
+      "command": "node",
+      "args": [
+        "scripts/mcp-env.cjs",
+        "npx",
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=dgrjyksawdongzxpkjey",
+        "--read-only"
+      ]
+    }
+  }
+}

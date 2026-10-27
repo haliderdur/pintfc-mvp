@@ -1,5 +1,97 @@
 # Progress
 
+## Session 05 — Privacy settings (2026-10-27)
+
+### Done
+
+- `PATCH /api/privacy` (`app/api/privacy/route.ts`): updates only the
+  caller's own `player_consents` row; reuses `canEditOwnConsent()` from
+  `lib/rules/visibility.ts` (already present from Session 01) to return
+  `403 FORBIDDEN_MINOR_CONSENT` when a minor without guardian consent
+  tries to turn a field **on** (off is always allowed); `400
+  VALIDATION_ERROR` for an unknown field or non-boolean value.
+- `/privacy` page (`app/privacy/page.tsx` + `PrivacyForm.tsx`): redirects
+  to `/sign-in` if signed out; three toggles
+  (`privacy-toggle-photo/nationality/stats`) with saving/`privacy-saved`/
+  `privacy-error` states; renders all three disabled as
+  `privacy-toggle-*-locked` with an explanatory note when the player
+  `is_minor && !guardian_consent`, per `screens.md`.
+- `app/privacy/loading.tsx` / `error.tsx`, matching the convention from
+  `/squad` and `/fixtures/[id]`.
+- Confirmed the toggle takes effect immediately on `/players/[id]`
+  (Session 04's page) via `lib/profile/get-profile.ts`, which already
+  reads live from `public_profile` — no caching to work around.
+- Found and fixed a bug in this session's own API test while writing it
+  (not a product bug): the first draft fetched the public profile page
+  reusing the same signed-in player's cookies used to PATCH their own
+  consent, which hits the "viewing your own profile" path (AC-4.3.3,
+  always-visible) and masked whatever the real public-view result was.
+  Fixed by fetching through a separate, signed-out `APIRequestContext`
+  (`tests/api/privacy.spec.ts`).
+- Found and fixed two pre-existing issues unrelated to this session's
+  code while running its exit gate: `npm run lint` failed on
+  `scripts/mcp-env.cjs`'s intentional `require()` calls (added it to
+  `eslint.config.mjs`'s `globalIgnores` — it's a plain Node CJS utility
+  script, not app source); and `tests/database/rsvp-rules.test.ts` failed
+  because the seeded "open" match's RSVP cutoff had passed relative to
+  today's date (re-ran `npm run seed`, per the stale-seed gotcha flagged
+  in Session 01's notes below).
+
+### Proof (exit gate)
+
+```
+$ npx tsc --noEmit
+(no output — exit 0)
+
+$ npm run build
+✓ Compiled successfully
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/auth/sign-in
+├ ƒ /api/auth/sign-out
+├ ƒ /api/auth/sign-out-all
+├ ƒ /api/fixtures/[id]/rsvp
+├ ƒ /api/fixtures/[id]/summary
+├ ƒ /api/privacy
+├ ƒ /fixtures/[id]
+├ ƒ /players/[id]
+├ ƒ /privacy
+├ ƒ /sign-in
+└ ƒ /squad
+
+$ npm run plan-check
+plan-check passed: 38/38 acceptance checks, each with exactly one owning test.
+
+$ npm run test
+ Test Files  6 passed (6)
+      Tests  19 passed (19)
+
+$ npm run lint
+(no errors or warnings — exit 0)
+
+$ npx playwright test
+  29 passed (51.1s)
+```
+
+### Decisions made this session
+
+None new — built directly on D1–D17, using the `canEditOwnConsent()` /
+`player_consents_self_update` RLS policy already in place from Session
+01.
+
+### Next session needs to know
+
+- Session 05's owned ACs (AC-4.3.2, AC-4.3.4) are done; all 38 ACs now
+  have an owning test.
+- `scripts/mcp-env.cjs` is now excluded from `eslint.config.mjs` by path
+  rather than by in-file disable comments — if more `.cjs` utility
+  scripts are added later, extend that same ignore entry rather than
+  re-adding per-line disables.
+- Re-seed (`npm run seed`) before the next session starts if any
+  time-relative database test fails for no code reason — same gotcha as
+  Session 01/04, now hit a second time.
+
 ## Session 04 — Squad and profiles (2026-10-26)
 
 ### Done

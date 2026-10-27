@@ -18,6 +18,9 @@ const eslintConfig = defineConfig([
     // JS under playwright-report/ got linted as if it were app code).
     "playwright-report/**",
     "test-results/**",
+    // Plain Node CommonJS utility script (not app source) — `require()`
+    // is the point of a .cjs file, not something to flag.
+    "scripts/mcp-env.cjs",
   ]),
 ]);
 

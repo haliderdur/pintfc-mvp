@@ -50,6 +50,18 @@ async function getNextMatch(supabase: SupabaseServerClient): Promise<NextMatch |
     .gte("kickoff_at", new Date().toISOString())
     .order("kickoff_at", { ascending: true })
     .limit(1)
+    // opponent_id/venue_id are single FKs on `matches`, so PostgREST embeds
+    // each as one object, not an array — supabase-js can't infer that
+    // cardinality from an untyped client, so it's declared explicitly here.
+    .returns<
+      Array<{
+        id: string;
+        kickoff_at: string;
+        status: "scheduled" | "cancelled";
+        opponents: { name: string } | null;
+        venues: { name: string } | null;
+      }>
+    >()
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
@@ -58,8 +70,8 @@ async function getNextMatch(supabase: SupabaseServerClient): Promise<NextMatch |
     id: data.id,
     kickoffAt: data.kickoff_at,
     status: data.status,
-    opponentName: data.opponents?.[0]?.name ?? "",
-    venueName: data.venues?.[0]?.name ?? "",
+    opponentName: data.opponents?.name ?? "",
+    venueName: data.venues?.name ?? "",
   };
 }
 
@@ -78,7 +90,16 @@ async function getLatestResults(supabase: SupabaseServerClient): Promise<LatestR
   const { data: matches, error: matchesError } = await supabase
     .from("matches")
     .select("id, kickoff_at, opponents(name), competitions(type)")
-    .in("id", matchIds);
+    .in("id", matchIds)
+    // See getNextMatch's comment: these are single-FK embeds, each one object.
+    .returns<
+      Array<{
+        id: string;
+        kickoff_at: string;
+        opponents: { name: string } | null;
+        competitions: { type: "league" | "friendly" } | null;
+      }>
+    >();
   if (matchesError) throw matchesError;
 
   const matchById = new Map((matches ?? []).map((m) => [m.id, m]));
@@ -90,8 +111,8 @@ async function getLatestResults(supabase: SupabaseServerClient): Promise<LatestR
       return {
         matchId: r.match_id,
         kickoffAt: match.kickoff_at,
-        opponentName: match.opponents?.[0]?.name ?? "",
-        competitionType: match.competitions?.[0]?.type ?? "league",
+        opponentName: match.opponents?.name ?? "",
+        competitionType: match.competitions?.type ?? "league",
         homeScore: r.home_score,
         awayScore: r.away_score,
       };

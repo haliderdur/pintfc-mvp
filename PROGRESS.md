@@ -27,6 +27,18 @@
 - Full suite run together (not per-session subsets): typecheck, build,
   plan-check, Vitest, full Playwright (31 tests across api + e2e),
   lint — all green, re-confirmed after the second reseed.
+- Pushed to `main` (commit `33be61f`), which auto-deployed to
+  production; smoke-tested against the live URL itself, not
+  `localhost`. Found and fixed a bug in this verification step while
+  doing it (not a product bug): the first smoke-test attempt set
+  `PLAYWRIGHT_TEST_BASE_URL` as an env var, but `playwright.config.ts`
+  hardcodes `baseURL` and never reads that variable, plus its
+  `webServer` block always starts a local server regardless — so that
+  run silently tested `localhost:3100` again, not production. Fixed by
+  running a temporary one-off config (`baseURL` only, no `webServer`)
+  against `https://halid-pintfc.vercel.app`, confirmed by the real
+  network latency (seconds, not milliseconds) in the test durations;
+  deleted the temp config immediately after.
 
 ### Proof (exit gate)
 
@@ -56,6 +68,12 @@ Seed complete: 40 active players + 1 archived, 1 season, 2 competitions,
 1 cancelled upcoming match, 1 class-demo match, 1 later scheduled match,
 2 trainings, 1 standings snapshot, 5 RSVPs. Logins written to seed-logins.md.
 # (identical on both runs)
+
+$ npx playwright test --config=smoke.config.ts tests/e2e/squad.spec.ts \
+  tests/e2e/release-gates.spec.ts tests/e2e/auth.spec.ts tests/e2e/home.spec.ts \
+  -g "AC-4.1.1|AC-4.1.3|AC-5.2|AC-5.4|AC-1.1.1|AC-1.1.3|AC-2.1.1"
+  # baseURL: https://halid-pintfc.vercel.app (temp config, deleted after)
+  7 passed (26.1s)
 ```
 
 ### Decisions made this session

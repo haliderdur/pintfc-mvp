@@ -26,8 +26,8 @@ export default async function PrivacyPage() {
   const locked = player.is_minor && !player.guardian_consent;
 
   return (
-    <main>
-      <h1>Privacy settings</h1>
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
+      <h1 className="text-2xl font-semibold tracking-tight">Privacy settings</h1>
       <PrivacyForm
         locked={locked}
         initialConsents={{

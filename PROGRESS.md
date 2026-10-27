@@ -1,5 +1,108 @@
 # Progress
 
+## Session 08 — UI modernization: Tailwind CSS + shadcn/ui (2026-10-27)
+
+### Done
+
+- Triggering feedback: "does not look like user friendly. I can not see
+  buttons easily." Most pages were bare unstyled HTML (zero CSS beyond
+  one `page.module.css`), so buttons/links had no visual affordance.
+- Added Tailwind CSS v4 (`tailwindcss`, `@tailwindcss/postcss`,
+  `postcss.config.mjs`, `@import "tailwindcss"` in `app/globals.css`).
+- Initialized shadcn/ui via `npx shadcn@latest init -d` with `--base
+  base-ui` (Base UI primitives, not Radix — this install's generated
+  `Button` uses a `render` prop for polymorphism, not `asChild`).
+  Installed components: `button`, `input`, `label`, `card`, `badge`,
+  `separator`, `alert`, `skeleton`, `switch` (source files under
+  `components/ui/`, per shadcn's own-the-code model).
+- Restyled every route end to end — `app/page.tsx` (home), `app/squad/`,
+  `app/players/[id]/`, `app/fixtures/[id]/` (incl.
+  `FixtureRsvpPanel.tsx`), `app/privacy/` (incl. `PrivacyForm.tsx`),
+  `app/sign-in/`, `components/Header.tsx` /
+  `components/HeaderAuthControls.tsx` — plus every route's
+  `loading.tsx`/`error.tsx` (Skeleton / Alert states). Every existing
+  `data-testid` was preserved exactly; zero business logic changed.
+- Fixed a `shadcn init` footgun proactively: it rewrote `globals.css`
+  with a circular `--font-sans: var(--font-sans)` in `@theme inline`,
+  which resolves at CSS parse time (before Next.js injects the real font
+  variable at runtime) — replaced with literal Geist font-family name
+  strings.
+- Kept exactly one CSS Module class (`.pintFcRow` in
+  `app/page.module.css`) because `tests/e2e/home.spec.ts` AC-2.3.2
+  regex-matches a hashed module class name on PINT FC's standings row —
+  a plain Tailwind utility class can't satisfy that assertion. Everything
+  else in that file was removed.
+- Found and fixed a real contrast bug the restyle surfaced: `a { color:
+  inherit }` and other element resets in `globals.css` were **unlayered**
+  CSS, which always wins over Tailwind's layered utilities (`@layer
+  base`/`utilities`) regardless of selector specificity — so
+  `text-primary-foreground` on the Sign-in button was silently losing to
+  the page's default foreground color, giving ~1.1:1 contrast (WCAG AA
+  needs 4.5:1). Fixed by wrapping those resets in `@layer base`.
+  Confirmed via `tests/e2e/release-gates.spec.ts` AC-5.2 (axe
+  `color-contrast`), which failed before the fix and passed after.
+- Investigated (then reverted) adding `nativeButton={false}` to
+  `Button`s rendered as `<Link>`/`<a>` to silence a Base UI dev-console
+  warning ("expected a native `<button>`"). That prop makes Base UI set
+  `role="button"` explicitly on the anchor, which broke
+  `getByRole("link", ...)` locators in `tests/e2e/home.spec.ts`
+  (AC-2.4.1, AC-2.4.3). The warning is a harmless dev-only notice (the
+  elements stay real, fully-functional `<a>` tags); not worth the test
+  breakage, so left as-is.
+- Visually verified `/` and `/squad` in a live dev-server browser
+  (Playwright MCP) — clear card layout, visible button contrast, no
+  console errors.
+
+### Exit gate output (full suite, after the restyle)
+
+```
+$ npx tsc --noEmit
+(clean, no output)
+
+$ npm run build
+✓ Compiled successfully
+✓ Generating static pages using 7 workers (11/11)
+
+$ npm run plan-check
+plan-check passed: 38/38 acceptance checks, each with exactly one owning test.
+
+$ npm run test
+ Test Files  6 passed (6)
+      Tests  19 passed (19)
+
+$ npx playwright test
+  31 passed (53.4s)
+
+$ npm run lint
+(no errors or warnings — exit 0)
+```
+
+### Decisions made this session
+
+Adopting Tailwind CSS + shadcn/ui is a styling-layer addition, not a
+deviation from the `CLAUDE.md` stack (Next.js/Supabase/Vitest/
+Playwright/Vercel are all unchanged) — no `DECISIONS.md` entry made for
+the adoption itself. The `@layer base` CSS-cascade fix and the
+`nativeButton` revert are implementation details captured above, not
+product/architecture decisions.
+
+### Next session needs to know
+
+- All six screens now use Tailwind + shadcn/ui (Base UI variant)
+  consistently; `components/ui/*` are owned source files, safe to extend
+  directly (e.g. add a new `cva` variant) rather than reinstalling.
+- `components.json` pins `"style": "base-nova"` — any future `npx shadcn
+  add <component>` will generate Base UI-flavored source (use the
+  `render` prop for polymorphism, never `asChild`).
+- Browser dev console will still show the Base UI `nativeButton`
+  notice for every Button rendered as a Link/anchor — this is expected
+  and intentionally left alone (see above); do not "fix" it again
+  without re-checking `getByRole("link", ...)` locators in
+  `tests/e2e/home.spec.ts` and `components/Header.tsx`'s
+  `header-signin` testid contract in `tests/api/auth-stale-cookie.spec.ts`.
+- This work has not yet been committed/pushed or deployed — pending the
+  product owner's go-ahead.
+
 ## Session 07 — Release gate (2026-10-27)
 
 ### Done

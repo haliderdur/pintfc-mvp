@@ -12,3 +12,4 @@ coverage/
 seed-logins.md
 playwright-report/
 test-results/
+.playwright-mcp/

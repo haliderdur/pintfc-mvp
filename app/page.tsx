@@ -2,6 +2,9 @@ import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextMatchCountdown } from "@/components/NextMatchCountdown";
 import { computeSeasonRecord } from "@/lib/season-record";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import styles from "./page.module.css";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createServerSupabaseClient>>;
@@ -152,81 +155,117 @@ export default async function Home() {
   );
 
   return (
-    <main className={styles.page}>
-      <section aria-label="Next match">
-        {nextMatch ? (
-          <div data-testid="home-next-match">
-            <p>{nextMatch.opponentName}</p>
-            <p>{nextMatch.venueName}</p>
-            <p>{formatKickoff(nextMatch.kickoffAt)}</p>
-            {nextMatch.status === "cancelled" ? (
-              <span data-testid="home-next-match-cancelled">Cancelled</span>
-            ) : (
-              <NextMatchCountdown kickoffAt={nextMatch.kickoffAt} />
-            )}
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Next match</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {nextMatch ? (
+            <div data-testid="home-next-match" className="flex flex-col gap-1">
+              <p className="text-lg font-medium">{nextMatch.opponentName}</p>
+              <p className="text-sm text-muted-foreground">{nextMatch.venueName}</p>
+              <p className="text-sm text-muted-foreground">{formatKickoff(nextMatch.kickoffAt)}</p>
+              {nextMatch.status === "cancelled" ? (
+                <Badge data-testid="home-next-match-cancelled" variant="destructive" className="mt-1 w-fit">
+                  Cancelled
+                </Badge>
+              ) : (
+                <div className="mt-1">
+                  <NextMatchCountdown kickoffAt={nextMatch.kickoffAt} />
+                </div>
+              )}
+            </div>
+          ) : (
+            <p data-testid="home-next-match-empty" className="text-muted-foreground">
+              No upcoming match scheduled.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Season record</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div data-testid="home-record" className="text-lg font-semibold">
+            {record.wins}W {record.draws}D {record.losses}L
           </div>
-        ) : (
-          <p data-testid="home-next-match-empty">No upcoming match scheduled.</p>
-        )}
-      </section>
+        </CardContent>
+      </Card>
 
-      <section aria-label="Season record">
-        <div data-testid="home-record">
-          {record.wins}W {record.draws}D {record.losses}L
-        </div>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Latest results</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {latestResults.length > 0 ? (
+            <ul data-testid="home-results-list" className="flex flex-col gap-2">
+              {latestResults.map((r) => (
+                <li key={r.matchId} className="flex items-center justify-between gap-2 text-sm">
+                  <span>{r.opponentName}</span>
+                  <span className="font-mono font-medium">
+                    {r.homeScore}-{r.awayScore}
+                  </span>
+                  <Badge variant="outline">{r.competitionType}</Badge>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p data-testid="home-results-empty" className="text-muted-foreground">
+              No published results yet.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-      <section aria-label="Latest results">
-        {latestResults.length > 0 ? (
-          <ul data-testid="home-results-list">
-            {latestResults.map((r) => (
-              <li key={r.matchId}>
-                <span>{r.opponentName}</span>
-                <span>
-                  {r.homeScore}-{r.awayScore}
-                </span>
-                <span>{r.competitionType}</span>
+      <Card>
+        <CardHeader>
+          <CardTitle>Mini league table</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <table data-testid="home-league-table" className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-1 pr-2 font-medium">Pos</th>
+                <th className="py-1 pr-2 font-medium">Team</th>
+                <th className="py-1 pr-2 font-medium">Played</th>
+                <th className="py-1 font-medium">Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              {standings.map((row) => (
+                <tr
+                  key={row.id}
+                  className={`border-b last:border-0 ${row.isPintFc ? `${styles.pintFcRow} bg-muted/50` : ""}`}
+                >
+                  <td className="py-1.5 pr-2">{row.position}</td>
+                  <td className="py-1.5 pr-2">{row.teamName}</td>
+                  <td className="py-1.5 pr-2">{row.played}</td>
+                  <td className="py-1.5">{row.points}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Squad</CardTitle>
+        </CardHeader>
+        <CardContent aria-label="Squad teaser" data-testid="home-squad-teaser" className="flex flex-col gap-3">
+          <ul className="flex flex-col gap-1">
+            {squad.map((player) => (
+              <li key={player.id} className="text-sm">
+                {player.fullName} #{player.squadNumber}
               </li>
             ))}
           </ul>
-        ) : (
-          <p data-testid="home-results-empty">No published results yet.</p>
-        )}
-      </section>
-
-      <section aria-label="Mini league table">
-        <table data-testid="home-league-table">
-          <thead>
-            <tr>
-              <th>Pos</th>
-              <th>Team</th>
-              <th>Played</th>
-              <th>Points</th>
-            </tr>
-          </thead>
-          <tbody>
-            {standings.map((row) => (
-              <tr key={row.id} className={row.isPintFc ? styles.pintFcRow : undefined}>
-                <td>{row.position}</td>
-                <td>{row.teamName}</td>
-                <td>{row.played}</td>
-                <td>{row.points}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
-      <section aria-label="Squad teaser" data-testid="home-squad-teaser">
-        <ul>
-          {squad.map((player) => (
-            <li key={player.id}>
-              {player.fullName} #{player.squadNumber}
-            </li>
-          ))}
-        </ul>
-        <Link href="/squad">See full squad</Link>
-      </section>
+          <Button variant="outline" size="sm" className="w-fit" render={<Link href="/squad">See full squad</Link>} />
+        </CardContent>
+      </Card>
     </main>
   );
 }

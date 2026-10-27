@@ -15,8 +15,8 @@ export default async function FixturePage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <main>
-      <h1>Fixture</h1>
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
+      <h1 className="text-2xl font-semibold tracking-tight">Fixture</h1>
       <FixtureRsvpPanel matchId={id} isSignedIn={isSignedIn} initialSummary={summary} />
     </main>
   );

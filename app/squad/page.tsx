@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { PlayerPosition } from "@/lib/profile/get-profile";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 type SquadPlayer = {
   id: string;
@@ -38,31 +40,43 @@ export default async function SquadPage() {
 
   if (players.length === 0) {
     return (
-      <main>
-        <p data-testid="squad-empty">No players yet.</p>
+      <main className="mx-auto w-full max-w-3xl px-4 py-8">
+        <p data-testid="squad-empty" className="text-muted-foreground">
+          No players yet.
+        </p>
       </main>
     );
   }
 
   return (
-    <main>
-      <h1>Squad</h1>
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8">
+      <h1 className="text-2xl font-semibold tracking-tight">Squad</h1>
       {POSITION_ORDER.map((position) => {
         const group = players.filter((p) => p.position === position);
         if (group.length === 0) return null;
 
         return (
-          <section key={position} aria-label={POSITION_LABELS[position]}>
-            <h2>{POSITION_LABELS[position]}</h2>
-            <ul>
+          <section key={position} aria-label={POSITION_LABELS[position]} className="flex flex-col gap-3">
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              {POSITION_LABELS[position]}
+            </h2>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {group.map((player) => (
-                <li key={player.id}>
-                  <Link data-testid={`squad-player-${player.id}`} href={`/players/${player.id}`}>
-                    {player.fullName} #{player.squadNumber}
-                  </Link>
-                </li>
+                <Link
+                  key={player.id}
+                  data-testid={`squad-player-${player.id}`}
+                  href={`/players/${player.id}`}
+                  className="block"
+                >
+                  <Card className="flex-row items-center gap-3 px-4 py-3 transition-colors hover:bg-muted">
+                    <Badge variant="secondary" className="shrink-0 font-mono">
+                      #{player.squadNumber}
+                    </Badge>
+                    <span className="font-medium">{player.fullName}</span>
+                  </Card>
+                </Link>
               ))}
-            </ul>
+            </div>
           </section>
         );
       })}

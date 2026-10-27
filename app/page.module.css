@@ -1,40 +1,8 @@
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 24px 16px;
-  box-sizing: border-box;
-  font-family: var(--font-geist-sans);
-  color: #111;
-  background-color: #fafafa;
-}
-
-.page section {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.page table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.page th,
-.page td {
-  text-align: left;
-  padding: 4px 8px;
-  border-bottom: 1px solid #e5e5e5;
-}
-
+/* Kept as a CSS Module (not a Tailwind class) because
+   tests/e2e/home.spec.ts's AC-2.3.2 check asserts the row's `class`
+   attribute matches /pintFcRow/i — the hashed module class name
+   (e.g. page_pintFcRow__ab12c) satisfies that, a plain Tailwind
+   utility class would not. */
 .pintFcRow {
   font-weight: 700;
-}
-
-.skeleton {
-  height: 80px;
-  border-radius: 8px;
-  background: #ececec;
 }

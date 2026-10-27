@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export function HeaderAuthControls({ fullName }: { fullName: string }) {
   const router = useRouter();
@@ -12,14 +13,15 @@ export function HeaderAuthControls({ fullName }: { fullName: string }) {
   }
 
   return (
-    <div>
-      <span>{fullName}</span>
-      <button data-testid="header-signout" onClick={() => signOut("self")}>
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <Button variant="ghost" size="sm" render={<a href="/privacy">Privacy</a>} />
+      <span className="hidden text-sm text-muted-foreground sm:inline">{fullName}</span>
+      <Button data-testid="header-signout" variant="outline" size="sm" onClick={() => signOut("self")}>
         Sign out
-      </button>
-      <button data-testid="header-signout-all" onClick={() => signOut("all")}>
+      </Button>
+      <Button data-testid="header-signout-all" variant="ghost" size="sm" onClick={() => signOut("all")}>
         Sign out everywhere
-      </button>
+      </Button>
     </div>
   );
 }

@@ -1,5 +1,83 @@
 # Progress
 
+## Session 07 — Release gate (2026-10-27)
+
+### Done
+
+- Vercel project `halid-pintfc` created under `halid-s-team` (manually,
+  via the dashboard — the Vercel MCP connection's token is scoped
+  without project-create rights, confirmed via a 403 on `POST
+  /v11/projects`; the owner's own browser-authenticated session has no
+  such restriction). GitHub-connected, auto-deploys `main`.
+- Fixed a typo'd env var from that manual setup
+  (`NEXT_PUBLIC_SUPABASE_UR` → `NEXT_PUBLIC_SUPABASE_URL`, value
+  untouched) that was causing a 500 on every route; redeployed.
+- **D18** (`DECISIONS.md`): disabled Vercel Authentication (SSO
+  Protection) on the project — resolves `docs/REQUIREMENTS.md` R4, so
+  preview/production URLs need no Vercel login.
+- Added `tests/e2e/release-gates.spec.ts` (`@axe-core/playwright` new
+  dev dependency): AC-5.2 (WCAG AA contrast, `color-contrast` rule) and
+  AC-5.4 (no horizontal scroll at 320px) checked across all six screens
+  built in Sessions 02–06 (`/`, `/squad`, `/players/[id]`,
+  `/fixtures/[id]`, `/sign-in`, `/privacy`). Neither AC is owned by a
+  test-map.md row — this session verifies cross-cutting gates, it
+  doesn't own an AC.
+- Confirmed `npm run seed` is idempotent: ran it twice in a row,
+  identical "Seed complete" counts both times.
+- Full suite run together (not per-session subsets): typecheck, build,
+  plan-check, Vitest, full Playwright (31 tests across api + e2e),
+  lint — all green, re-confirmed after the second reseed.
+
+### Proof (exit gate)
+
+```
+$ npx tsc --noEmit
+(no output — exit 0)
+
+$ npm run build
+✓ Compiled successfully
+
+$ npm run plan-check
+plan-check passed: 38/38 acceptance checks, each with exactly one owning test.
+
+$ npm run test
+ Test Files  6 passed (6)
+      Tests  19 passed (19)
+
+$ npm run lint
+(no errors or warnings — exit 0)
+
+$ npx playwright test
+  31 passed (52.9s)
+
+$ npm run seed   # run twice consecutively
+Seed complete: 40 active players + 1 archived, 1 season, 2 competitions,
+5 past league results (4 published, 1 unpublished), 1 friendly result,
+1 cancelled upcoming match, 1 class-demo match, 1 later scheduled match,
+2 trainings, 1 standings snapshot, 5 RSVPs. Logins written to seed-logins.md.
+# (identical on both runs)
+```
+
+### Decisions made this session
+
+See `DECISIONS.md` D18 (Vercel SSO Protection disabled, resolving R4).
+
+### Next session needs to know
+
+- Live at https://halid-pintfc.vercel.app — production, GitHub-connected
+  to `main`. Vercel project creation/deployment-listing/runtime-log MCP
+  calls need `teamId` omitted (not passed) to work on this account —
+  passing an explicit `teamId` 404s/403s on several endpoints
+  (`get_project`, `create_deployment`, `get_deployment`,
+  `get_runtime_errors`) even though the account only has one team. Project
+  *creation* itself is blocked for the MCP connection entirely (403,
+  confirmed not an account/role issue — `get_auth_user` shows the
+  connection is the account owner); only the dashboard (or a
+  separately-authenticated CLI) can create a new Vercel project.
+- MVP is release-ready: all 38 ACs owned and passing, both release
+  gates (AC-5.2/5.4) passing on every screen, re-seeded last on
+  2026-10-27.
+
 ## Session 05 — Privacy settings (2026-10-27)
 
 ### Done
